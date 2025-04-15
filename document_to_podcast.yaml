@@ -1,0 +1,257 @@
+# PIPELINE DEFINITION
+# Name: document-to-podcast
+# Description: Convert a document to a podcast.
+#              This pipeline downloads a document, processes it, converts it to a script,
+#              and finally converts the script to speech.
+# Inputs:
+#    audio_format: str [Default: 'WAV']
+#    cohost_name: str [Default: 'Michael']
+#    cohost_voice_profile: str [Default: 'am_michael']
+#    document_url: str
+#    file_type: str [Default: '.html']
+#    host_name: str [Default: 'Sarah']
+#    host_voice_profile: str [Default: 'af_sarah']
+components:
+  comp-downloader:
+    executorLabel: exec-downloader
+    inputDefinitions:
+      parameters:
+        url:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        html_file:
+          artifactType:
+            schemaTitle: system.HTML
+            schemaVersion: 0.0.1
+  comp-performer:
+    executorLabel: exec-performer
+    inputDefinitions:
+      artifacts:
+        podcast_script:
+          artifactType:
+            schemaTitle: system.Markdown
+            schemaVersion: 0.0.1
+      parameters:
+        cohost_voice_profile:
+          parameterType: STRING
+        file_type:
+          parameterType: STRING
+        host_voice_profile:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        podcast:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+  comp-scriptwriter:
+    executorLabel: exec-scriptwriter
+    inputDefinitions:
+      artifacts:
+        processed_document:
+          artifactType:
+            schemaTitle: system.Markdown
+            schemaVersion: 0.0.1
+      parameters:
+        cohost_name:
+          parameterType: STRING
+        host_name:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        podcast_script:
+          artifactType:
+            schemaTitle: system.Markdown
+            schemaVersion: 0.0.1
+  comp-transformer:
+    executorLabel: exec-transformer
+    inputDefinitions:
+      artifacts:
+        html_file:
+          artifactType:
+            schemaTitle: system.HTML
+            schemaVersion: 0.0.1
+      parameters:
+        file_type:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        processed_document:
+          artifactType:
+            schemaTitle: system.Markdown
+            schemaVersion: 0.0.1
+deploymentSpec:
+  executors:
+    exec-downloader:
+      container:
+        args:
+        - downloader.py
+        - --url
+        - '{{$.inputs.parameters[''url'']}}'
+        - --output
+        - '{{$.outputs.artifacts[''html_file''].path}}'
+        - --overwrite
+        command:
+        - python
+        image: dpoulopoulos/kfp-discovery-downloader:v0.0.1
+    exec-performer:
+      container:
+        args:
+        - performer.py
+        - --input
+        - '{{$.inputs.artifacts[''podcast_script''].path}}'
+        - --output
+        - '{{$.outputs.artifacts[''podcast''].path}}'
+        - --voice-profiles
+        - '{{$.inputs.parameters[''host_voice_profile'']}}'
+        - '{{$.inputs.parameters[''cohost_voice_profile'']}}'
+        - --file-type
+        - '{{$.inputs.parameters[''file_type'']}}'
+        command:
+        - python
+        image: dpoulopoulos/kfp-discovery-sts-amd64:v0.0.3
+        resources:
+          accelerator:
+            resourceCount: '1'
+            resourceType: nvidia.com/gpu
+    exec-scriptwriter:
+      container:
+        args:
+        - scriptwriter.py
+        - --input
+        - '{{$.inputs.artifacts[''processed_document''].path}}'
+        - --output
+        - '{{$.outputs.artifacts[''podcast_script''].path}}'
+        - --hosts
+        - '{{$.inputs.parameters[''host_name'']}}'
+        - '{{$.inputs.parameters[''cohost_name'']}}'
+        command:
+        - python
+        image: dpoulopoulos/kfp-discovery-ttt-amd64:v0.0.3
+        resources:
+          accelerator:
+            resourceCount: '1'
+            resourceType: nvidia.com/gpu
+    exec-transformer:
+      container:
+        args:
+        - transformer.py
+        - --input
+        - '{{$.inputs.artifacts[''html_file''].path}}'
+        - --output
+        - '{{$.outputs.artifacts[''processed_document''].path}}'
+        - --file-type
+        - '{{$.inputs.parameters[''file_type'']}}'
+        command:
+        - python
+        image: dpoulopoulos/kfp-discovery-transformer:v0.0.4
+pipelineInfo:
+  description: 'Convert a document to a podcast.
+
+    This pipeline downloads a document, processes it, converts it to a script,
+
+    and finally converts the script to speech.'
+  name: document-to-podcast
+root:
+  dag:
+    tasks:
+      downloader:
+        cachingOptions: {}
+        componentRef:
+          name: comp-downloader
+        inputs:
+          parameters:
+            url:
+              componentInputParameter: document_url
+        taskInfo:
+          name: downloader
+      performer:
+        cachingOptions: {}
+        componentRef:
+          name: comp-performer
+        dependentTasks:
+        - scriptwriter
+        inputs:
+          artifacts:
+            podcast_script:
+              taskOutputArtifact:
+                outputArtifactKey: podcast_script
+                producerTask: scriptwriter
+          parameters:
+            cohost_voice_profile:
+              componentInputParameter: cohost_voice_profile
+            file_type:
+              componentInputParameter: audio_format
+            host_voice_profile:
+              componentInputParameter: host_voice_profile
+        taskInfo:
+          name: performer
+      scriptwriter:
+        cachingOptions: {}
+        componentRef:
+          name: comp-scriptwriter
+        dependentTasks:
+        - transformer
+        inputs:
+          artifacts:
+            processed_document:
+              taskOutputArtifact:
+                outputArtifactKey: processed_document
+                producerTask: transformer
+          parameters:
+            cohost_name:
+              componentInputParameter: cohost_name
+            host_name:
+              componentInputParameter: host_name
+        taskInfo:
+          name: scriptwriter
+      transformer:
+        cachingOptions: {}
+        componentRef:
+          name: comp-transformer
+        dependentTasks:
+        - downloader
+        inputs:
+          artifacts:
+            html_file:
+              taskOutputArtifact:
+                outputArtifactKey: html_file
+                producerTask: downloader
+          parameters:
+            file_type:
+              componentInputParameter: file_type
+        taskInfo:
+          name: transformer
+  inputDefinitions:
+    parameters:
+      audio_format:
+        defaultValue: WAV
+        isOptional: true
+        parameterType: STRING
+      cohost_name:
+        defaultValue: Michael
+        isOptional: true
+        parameterType: STRING
+      cohost_voice_profile:
+        defaultValue: am_michael
+        description: Voice profile for the co-host.
+        isOptional: true
+        parameterType: STRING
+      document_url:
+        parameterType: STRING
+      file_type:
+        defaultValue: .html
+        isOptional: true
+        parameterType: STRING
+      host_name:
+        defaultValue: Sarah
+        isOptional: true
+        parameterType: STRING
+      host_voice_profile:
+        defaultValue: af_sarah
+        description: Voice profile for the host.
+        isOptional: true
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.12.1

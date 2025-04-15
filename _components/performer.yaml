@@ -1,0 +1,23 @@
+name: performer
+description: Convert a text document to speech using the specified voice profiles.
+
+inputs:
+- {name: podcast_script, type: Markdown, description: The path to the input document.}
+- {name: host_voice_profile, type: String, description: The voice profile for the host.}
+- {name: cohost_voice_profile, type: String, description: The voice profile for the co-host.}
+- {name: file_type, type: String, description: The file format for the output audio.}
+
+outputs:
+- {name: podcast, type: Artifact, description: The path to save the converted speech.}
+
+implementation:
+  container:
+    image: dpoulopoulos/kfp-discovery-sts-amd64:v0.0.3
+    command: [python]
+    args: [
+      performer.py,
+      --input,  {inputPath: podcast_script},
+      --output, {outputPath: podcast},
+      --voice-profiles,  {inputValue: host_voice_profile}, {inputValue: cohost_voice_profile},
+      --file-type, {inputValue: file_type},
+    ]

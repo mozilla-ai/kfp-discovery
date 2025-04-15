@@ -1,0 +1,21 @@
+name: transformer
+description: Preprocess the raw input document to extract the text.
+             Supported formats - PDF, DOCX, TXT, MD, HTML.
+
+inputs:
+- {name: html_file, type: HTML, description: The path to the input document.}
+- {name: file_type, type: String, description: The type of the input document}
+
+outputs:
+- {name: processed_document, type: Markdown, description: The path to save the preprocessed document.}
+
+implementation:
+  container:
+    image: dpoulopoulos/kfp-transformer:9c5f5b6
+    command: [python]
+    args: [
+      transformer.py,
+      --input,  {inputPath: html_file},
+      --output, {outputPath: processed_document},
+      --file-type, {inputValue: file_type},
+    ]

@@ -1,0 +1,2 @@
+phonemizer-fork==3.3.2
+espeakng-loader==0.2.4

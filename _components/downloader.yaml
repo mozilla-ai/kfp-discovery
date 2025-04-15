@@ -1,0 +1,19 @@
+name: downloader
+description: Download a document from the given URL.
+
+inputs:
+- {name: url, type: String, description: The URL of the document to download.}
+
+outputs:
+- {name: html_file, type: HTML, description: The path to save the downloaded document.}
+
+implementation:
+  container:
+    image: dpoulopoulos/kfp-downloader:9c5f5b6
+    command: [python]
+    args: [
+      downloader.py,
+      --url, {inputValue: url},
+      --output, {outputPath: html_file},
+      --overwrite
+    ]
