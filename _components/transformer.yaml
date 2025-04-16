@@ -11,7 +11,7 @@ outputs:
 
 implementation:
   container:
-    image: dpoulopoulos/kfp-transformer:9c5f5b6
+    image: dpoulopoulos/kfp-transformer:c5b697f
     command: [python]
     args: [
       transformer.py,

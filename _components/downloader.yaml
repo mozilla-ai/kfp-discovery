@@ -9,7 +9,7 @@ outputs:
 
 implementation:
   container:
-    image: dpoulopoulos/kfp-downloader:9c5f5b6
+    image: dpoulopoulos/kfp-downloader:c5b697f
     command: [python]
     args: [
       downloader.py,

@@ -12,7 +12,7 @@ outputs:
 
 implementation:
   container:
-    image: dpoulopoulos/kfp-discovery-ttt-amd64:v0.0.3
+    image: dpoulopoulos/kfp-scriptwriter:c5b697f
     command: [python]
     args: [
       scriptwriter.py,
