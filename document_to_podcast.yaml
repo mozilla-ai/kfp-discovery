@@ -94,7 +94,7 @@ deploymentSpec:
         - --overwrite
         command:
         - python
-        image: dpoulopoulos/kfp-discovery-downloader:v0.0.1
+        image: dpoulopoulos/kfp-downloader:c5b697f
     exec-performer:
       container:
         args:
@@ -110,7 +110,7 @@ deploymentSpec:
         - '{{$.inputs.parameters[''file_type'']}}'
         command:
         - python
-        image: dpoulopoulos/kfp-discovery-sts-amd64:v0.0.3
+        image: dpoulopoulos/kfp-performer:c5b697f
         resources:
           accelerator:
             resourceCount: '1'
@@ -128,7 +128,7 @@ deploymentSpec:
         - '{{$.inputs.parameters[''cohost_name'']}}'
         command:
         - python
-        image: dpoulopoulos/kfp-discovery-ttt-amd64:v0.0.3
+        image: dpoulopoulos/kfp-scriptwriter:c5b697f
         resources:
           accelerator:
             resourceCount: '1'
@@ -145,7 +145,7 @@ deploymentSpec:
         - '{{$.inputs.parameters[''file_type'']}}'
         command:
         - python
-        image: dpoulopoulos/kfp-discovery-transformer:v0.0.4
+        image: dpoulopoulos/kfp-transformer:c5b697f
 pipelineInfo:
   description: 'Convert a document to a podcast.
 
