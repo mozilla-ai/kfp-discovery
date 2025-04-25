@@ -4,8 +4,8 @@ description: Write a podcast script from a given text document.
 
 inputs:
 - {name: processed_document, type: Markdown, description: The path to the input document.}
-- {name: host_name, type: String, description: The name of the host.}
-- {name: cohost_name, type: String, description: The name of the co-host.}
+- {name: host_name, type: String, default: Sarah, description: The name of the host.}
+- {name: cohost_name, type: String, default: Michael, description: The name of the co-host.}
 
 outputs:
 - {name: podcast_script, type: Markdown, description: The path to save the podcast script.}
@@ -17,6 +17,6 @@ implementation:
     args: [
       scriptwriter.py,
       --input,  {inputPath: processed_document},
-      --output, {outputPath: podcast_script},
       --hosts,  {inputValue: host_name}, {inputValue: cohost_name},
+      --output, {outputPath: podcast_script},
     ]

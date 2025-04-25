@@ -3,9 +3,9 @@ description: Convert a text document to speech using the specified voice profile
 
 inputs:
 - {name: podcast_script, type: Markdown, description: The path to the input document.}
-- {name: host_voice_profile, type: String, description: The voice profile for the host.}
-- {name: cohost_voice_profile, type: String, description: The voice profile for the co-host.}
-- {name: file_type, type: String, description: The file format for the output audio.}
+- {name: host_voice_profile, type: String, default: af_sarah, description: The voice profile for the host.}
+- {name: cohost_voice_profile, type: String, default: am_michael, description: The voice profile for the co-host.}
+- {name: audio_format, type: String, default: WAV, description: The file format for the output audio.}
 
 outputs:
 - {name: podcast, type: Artifact, description: The path to save the converted speech.}
@@ -17,7 +17,7 @@ implementation:
     args: [
       performer.py,
       --input,  {inputPath: podcast_script},
-      --output, {outputPath: podcast},
       --voice-profiles,  {inputValue: host_voice_profile}, {inputValue: cohost_voice_profile},
-      --file-type, {inputValue: file_type},
+      --output, {outputPath: podcast},
+      --file-type, {inputValue: audio_format},
     ]
