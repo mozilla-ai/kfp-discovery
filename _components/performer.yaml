@@ -10,6 +10,13 @@ inputs:
 outputs:
 - {name: podcast, type: Artifact, description: The path to save the converted speech.}
 
+metadata:
+  annotations:
+    hints: | 
+      inputs 'host_voice_profile' and 'cohost_voice_profile' must be different from each other.
+      inputs 'host_voice_profile' and 'cohost_voice_profile' may only have recommended values from https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md.
+    tags: [text-to-speech, audio, podcast]
+
 implementation:
   container:
     image: dpoulopoulos/kfp-performer:c5b697f

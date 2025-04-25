@@ -7,6 +7,10 @@ inputs:
 outputs:
 - {name: downloaded_file_path, type: HTML, description: The path to the saved downloaded document.}
 
+metadata:
+  annotations:
+    tags: [downloader, document, persist, http, https]
+
 implementation:
   container:
     image: dpoulopoulos/kfp-downloader:c5b697f

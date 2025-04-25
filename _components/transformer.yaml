@@ -9,6 +9,10 @@ inputs:
 outputs:
 - {name: processed_document, type: Markdown, description: The path to save the preprocessed document.}
 
+metadata:
+  annotations:
+    tags: [text, sanitization, document, preprocess, html, pdf, docx, txt, md]
+
 implementation:
   container:
     image: dpoulopoulos/kfp-transformer:c5b697f

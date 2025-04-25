@@ -10,6 +10,10 @@ inputs:
 outputs:
 - {name: podcast_script, type: Markdown, description: The path to save the podcast script.}
 
+metadata:
+  annotations:
+    tags: [document, script, podcast]
+
 implementation:
   container:
     image: dpoulopoulos/kfp-scriptwriter:c5b697f
