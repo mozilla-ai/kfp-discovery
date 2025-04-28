@@ -17,11 +17,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class MockLumigatorClient:
-    def recommend(self, task: str, dataset: str, *args, **kwargs):
-        return "hexgrad/Kokoro-82M"
-
-
 def main():
     argparser = argparse.ArgumentParser(
         description="Convert text to speech using a pre-trained model."
@@ -42,12 +37,10 @@ def main():
         "--voice-profiles",
         type=str,
         nargs=2,
-        default=["af_sarah", "am_michael"],
         help=(
-            "List of voice profiles to use for the podcast speakers."
+            "List containing the two voice profiles to use for the podcast speakers."
             " The first element is the voice profile for the first speaker,"
             " the main host, and the second element is the voice profile for the second speaker."
-            " The default is ['af_sarah', 'am_michael']."
         ),
     )
     argparser.add_argument(
@@ -57,40 +50,31 @@ def main():
         default="WAV",
         help="Type of the output audio file.",
     )
+    argparser.add_argument(
+        "--model",
+        type=str,
+        required=True,
+        help="The model to use for generating the podcast script.",
+    )
 
     args = argparser.parse_args()
-
-    # Using a mock Lumigtor client for demonstration purposes.
-    # In a real scenario, replace this with the actual Lumigtor client,
-    # which will be used to retrieve recommendations for the model.
-    lumigator_client = MockLumigatorClient()
 
     # Load the input text file
     with open(args.input, "r") as f:
         podcast_script = f.read()
 
     speakers = [
-        {"id": 1, "voice_profile": "af_sarah"},
-        {"id": 2, "voice_profile": "am_michael"},
+        {"id": 1, "voice_profile": args.voice_profiles[0]},
+        {"id": 2, "voice_profile": args.voice_profiles[1]},
     ]
 
     if speakers[0]["voice_profile"][0] != speakers[1]["voice_profile"][0]:
-        raise ValueError(
-            "Both Kokoro speakers need to have the same language code. "
-            "More info here https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md"
-        )
+        raise ValueError("Both speakers need to have the same language code.")
 
     # Get which language is used for generation from the first character of the Kokoro voice profile
     language_code = speakers[0]["voice_profile"][0]
 
-    task = "text-to-speech"
-    logger.info(
-        f"Getting recommendations for {task} language code from Lumigtor client..."
-    )
-    suggested_model = lumigator_client.recommend(task=task, dataset=podcast_script)
-    logger.info(f"Recommended model for '{task}' based on the dataset: {suggested_model}")
-
-    model = load_tts_model(suggested_model, **{"lang_code": language_code})
+    model = load_tts_model(args.model, **{"lang_code": language_code})
 
     logger.info("Generating podcast audio...")
     podcast_audio = []
