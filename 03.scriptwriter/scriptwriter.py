@@ -29,7 +29,7 @@ Example:
   "Speaker 2": "Oh, that's cool! But how does..."
 }
 Important: Make sure that the output is in valid JSON format,
-with double quotes around keys and values, no trailing commas, and openning and closing brackets.
+with double quotes around keys and values, no trailing commas, and opening and closing brackets.
 """
 
 
