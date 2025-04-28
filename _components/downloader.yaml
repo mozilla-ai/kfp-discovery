@@ -2,10 +2,14 @@ name: downloader
 description: Download a document from the given URL.
 
 inputs:
-- {name: url, type: String, description: The URL of the document to download.}
+- {name: document_url, type: String, description: The URL of the document to download.}
 
 outputs:
-- {name: html_file, type: HTML, description: The path to save the downloaded document.}
+- {name: downloaded_file_path, type: HTML, description: The path to the saved downloaded document.}
+
+metadata:
+  annotations:
+    tags: [downloader, document, persist, http, https]
 
 implementation:
   container:
@@ -13,7 +17,7 @@ implementation:
     command: [python]
     args: [
       downloader.py,
-      --url, {inputValue: url},
-      --output, {outputPath: html_file},
+      --url, {inputValue: document_url},
+      --output, {outputPath: downloaded_file_path},
       --overwrite
     ]

@@ -29,13 +29,8 @@ Example:
   "Speaker 2": "Oh, that's cool! But how does..."
 }
 Important: Make sure that the output is in valid JSON format,
-with double quotes around keys and values, no trailing commas, and openning and closing brackets.
+with double quotes around keys and values, no trailing commas, and opening and closing brackets.
 """
-
-
-class MockLumigatorClient:
-    def recommend(self, task: str, dataset: str, *args, **kwargs):
-        return "bartowski/Qwen2.5-7B-Instruct-GGUF/Qwen2.5-7B-Instruct-Q8_0.gguf"
 
 
 def main():
@@ -63,16 +58,18 @@ def main():
             " The default is ['Sarah', 'Michael']."
         ),
     )
+    argparser.add_argument(
+        "--model",
+        type=str,
+        required=True,
+        help="The model to use for generating the podcast script.",
+    )
 
     args = argparser.parse_args()
     input_path = args.input
     output_path = args.output
     hosts = args.hosts
-
-    # Using a mock Lumigtor client for demonstration purposes.
-    # In a real scenario, replace this with the actual Lumigtor client,
-    # which will be used to retrieve recommendations for the model.
-    lumigator_client = MockLumigatorClient()
+    model = args.model
 
     logger.info(f"Loading input document from {input_path}...")
     with open(input_path, "r", encoding="utf-8") as f:
@@ -98,15 +95,7 @@ def main():
 
     system_prompt = PROMPT.replace("{SPEAKERS}", speakers_str)
     logger.info(f"System prompt: {system_prompt}")
-
-    task = "text-to-text"
-    logger.info(
-        f"Getting recommendations for {task} language code from Lumigtor client..."
-    )
-    suggested_model = lumigator_client.recommend(task=task, dataset=document)
-    logger.info(f"Recommended model for '{task}' based on the dataset: {suggested_model}")
-
-    model = load_llama_cpp_model(suggested_model)
+    model = load_llama_cpp_model(model)
 
     max_characters = model.n_ctx() * 4
     if len(document) > max_characters:
