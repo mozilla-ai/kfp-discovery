@@ -11,11 +11,11 @@ outputs:
 
 metadata:
   annotations:
-    tags: [text, sanitization, document, preprocess, html, pdf, docx, txt, md]
+    tags: text, sanitization, document, preprocess, html, pdf, docx, txt, md
 
 implementation:
   container:
-    image: dpoulopoulos/kfp-transformer:c5b697f
+    image: mzdotai/workflow-components-transformer:latest
     command: [python]
     args: [
       transformer.py,

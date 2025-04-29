@@ -13,15 +13,16 @@ outputs:
 
 metadata:
   annotations:
-    tags: [document, script, podcast]
+    tags: document, script, podcast
 
 implementation:
   container:
-    image: dpoulopoulos/kfp-scriptwriter:c5b697f
+    image: mzdotai/workflow-components-scriptwriter:latest
     command: [python]
     args: [
       scriptwriter.py,
       --input,  {inputPath: processed_document},
       --hosts,  {inputValue: host_name}, {inputValue: cohost_name},
+      --model, {inputValue: model},
       --output, {outputPath: podcast_script},
     ]

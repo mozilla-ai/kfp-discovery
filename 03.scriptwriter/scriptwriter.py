@@ -62,7 +62,7 @@ def main():
         "--model",
         type=str,
         required=True,
-        help="The model to use for generating the podcast script.",
+        help="The text to text model to use for generating the podcast script.",
     )
 
     args = argparser.parse_args()

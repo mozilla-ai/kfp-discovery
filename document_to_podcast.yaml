@@ -2,25 +2,27 @@
 # Name: document-to-podcast
 # Description: Convert a document to a podcast.
 #              This pipeline downloads a document, processes it, converts it to a script,
-#              and finally converts the script to speech.
+#              and finally converts the script to speech (podcast).
 # Inputs:
-#    audio_format: str [Default: 'WAV']
-#    cohost_name: str [Default: 'Michael']
-#    cohost_voice_profile: str [Default: 'am_michael']
+#    audio_format: str
+#    cohost_name: str
+#    cohost_voice_profile: str
 #    document_url: str
-#    file_type: str [Default: '.html']
-#    host_name: str [Default: 'Sarah']
-#    host_voice_profile: str [Default: 'af_sarah']
+#    file_type: str
+#    host_name: str
+#    host_voice_profile: str
+#    text_to_speech_model: str
+#    text_to_text_model: str
 components:
   comp-downloader:
     executorLabel: exec-downloader
     inputDefinitions:
       parameters:
-        url:
+        document_url:
           parameterType: STRING
     outputDefinitions:
       artifacts:
-        html_file:
+        downloaded_file_path:
           artifactType:
             schemaTitle: system.HTML
             schemaVersion: 0.0.1
@@ -33,11 +35,21 @@ components:
             schemaTitle: system.Markdown
             schemaVersion: 0.0.1
       parameters:
-        cohost_voice_profile:
+        audio_format:
+          defaultValue: WAV
+          isOptional: true
           parameterType: STRING
-        file_type:
+        cohost_voice_profile:
+          defaultValue: am_michael
+          isOptional: true
           parameterType: STRING
         host_voice_profile:
+          defaultValue: af_sarah
+          isOptional: true
+          parameterType: STRING
+        model:
+          defaultValue: hexgrad/Kokoro-82M
+          isOptional: true
           parameterType: STRING
     outputDefinitions:
       artifacts:
@@ -55,8 +67,16 @@ components:
             schemaVersion: 0.0.1
       parameters:
         cohost_name:
+          defaultValue: Michael
+          isOptional: true
           parameterType: STRING
         host_name:
+          defaultValue: Sarah
+          isOptional: true
+          parameterType: STRING
+        model:
+          defaultValue: bartowski/Qwen2.5-7B-Instruct-GGUF/Qwen2.5-7B-Instruct-Q8_0.gguf
+          isOptional: true
           parameterType: STRING
     outputDefinitions:
       artifacts:
@@ -68,12 +88,14 @@ components:
     executorLabel: exec-transformer
     inputDefinitions:
       artifacts:
-        html_file:
+        file_path:
           artifactType:
             schemaTitle: system.HTML
             schemaVersion: 0.0.1
       parameters:
         file_type:
+          defaultValue: .html
+          isOptional: true
           parameterType: STRING
     outputDefinitions:
       artifacts:
@@ -88,70 +110,74 @@ deploymentSpec:
         args:
         - downloader.py
         - --url
-        - '{{$.inputs.parameters[''url'']}}'
+        - '{{$.inputs.parameters[''document_url'']}}'
         - --output
-        - '{{$.outputs.artifacts[''html_file''].path}}'
+        - '{{$.outputs.artifacts[''downloaded_file_path''].path}}'
         - --overwrite
         command:
         - python
-        image: dpoulopoulos/kfp-downloader:c5b697f
+        image: mzdotai/workflow-components-downloader:latest
     exec-performer:
       container:
         args:
         - performer.py
         - --input
         - '{{$.inputs.artifacts[''podcast_script''].path}}'
-        - --output
-        - '{{$.outputs.artifacts[''podcast''].path}}'
         - --voice-profiles
         - '{{$.inputs.parameters[''host_voice_profile'']}}'
         - '{{$.inputs.parameters[''cohost_voice_profile'']}}'
+        - --output
+        - '{{$.outputs.artifacts[''podcast''].path}}'
         - --file-type
-        - '{{$.inputs.parameters[''file_type'']}}'
+        - '{{$.inputs.parameters[''audio_format'']}}'
         command:
         - python
-        image: dpoulopoulos/kfp-performer:c5b697f
+        image: mzdotai/workflow-components-performer:latest
         resources:
           accelerator:
+            count: '1'
             resourceCount: '1'
             resourceType: nvidia.com/gpu
+            type: nvidia.com/gpu
     exec-scriptwriter:
       container:
         args:
         - scriptwriter.py
         - --input
         - '{{$.inputs.artifacts[''processed_document''].path}}'
-        - --output
-        - '{{$.outputs.artifacts[''podcast_script''].path}}'
         - --hosts
         - '{{$.inputs.parameters[''host_name'']}}'
         - '{{$.inputs.parameters[''cohost_name'']}}'
+        - --output
+        - '{{$.outputs.artifacts[''podcast_script''].path}}'
         command:
         - python
-        image: dpoulopoulos/kfp-scriptwriter:c5b697f
+        image: mzdotai/workflow-components-scriptwriter:latest
         resources:
           accelerator:
+            count: '1'
             resourceCount: '1'
             resourceType: nvidia.com/gpu
+            type: nvidia.com/gpu
     exec-transformer:
       container:
         args:
         - transformer.py
         - --input
-        - '{{$.inputs.artifacts[''html_file''].path}}'
-        - --output
-        - '{{$.outputs.artifacts[''processed_document''].path}}'
+        - '{{$.inputs.artifacts[''file_path''].path}}'
         - --file-type
         - '{{$.inputs.parameters[''file_type'']}}'
+        - --output
+        - '{{$.outputs.artifacts[''processed_document''].path}}'
         command:
         - python
-        image: dpoulopoulos/kfp-transformer:c5b697f
+        image: mzdotai/workflow-components-transformer:latest
 pipelineInfo:
   description: 'Convert a document to a podcast.
 
     This pipeline downloads a document, processes it, converts it to a script,
 
-    and finally converts the script to speech.'
+    and finally converts the script to speech (podcast).'
   name: document-to-podcast
 root:
   dag:
@@ -162,7 +188,7 @@ root:
           name: comp-downloader
         inputs:
           parameters:
-            url:
+            document_url:
               componentInputParameter: document_url
         taskInfo:
           name: downloader
@@ -179,12 +205,14 @@ root:
                 outputArtifactKey: podcast_script
                 producerTask: scriptwriter
           parameters:
+            audio_format:
+              componentInputParameter: audio_format
             cohost_voice_profile:
               componentInputParameter: cohost_voice_profile
-            file_type:
-              componentInputParameter: audio_format
             host_voice_profile:
               componentInputParameter: host_voice_profile
+            model:
+              componentInputParameter: text_to_speech_model
         taskInfo:
           name: performer
       scriptwriter:
@@ -204,6 +232,8 @@ root:
               componentInputParameter: cohost_name
             host_name:
               componentInputParameter: host_name
+            model:
+              componentInputParameter: text_to_text_model
         taskInfo:
           name: scriptwriter
       transformer:
@@ -214,9 +244,9 @@ root:
         - downloader
         inputs:
           artifacts:
-            html_file:
+            file_path:
               taskOutputArtifact:
-                outputArtifactKey: html_file
+                outputArtifactKey: downloaded_file_path
                 producerTask: downloader
           parameters:
             file_type:
@@ -226,32 +256,30 @@ root:
   inputDefinitions:
     parameters:
       audio_format:
-        defaultValue: WAV
         isOptional: true
         parameterType: STRING
       cohost_name:
-        defaultValue: Michael
         isOptional: true
         parameterType: STRING
       cohost_voice_profile:
-        defaultValue: am_michael
-        description: Voice profile for the co-host.
         isOptional: true
         parameterType: STRING
       document_url:
         parameterType: STRING
       file_type:
-        defaultValue: .html
         isOptional: true
         parameterType: STRING
       host_name:
-        defaultValue: Sarah
         isOptional: true
         parameterType: STRING
       host_voice_profile:
-        defaultValue: af_sarah
-        description: Voice profile for the host.
+        isOptional: true
+        parameterType: STRING
+      text_to_speech_model:
+        isOptional: true
+        parameterType: STRING
+      text_to_text_model:
         isOptional: true
         parameterType: STRING
 schemaVersion: 2.1.0
-sdkVersion: kfp-2.12.1
+sdkVersion: kfp-2.13.0
