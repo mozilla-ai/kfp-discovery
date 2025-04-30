@@ -126,6 +126,8 @@ deploymentSpec:
         - --voice-profiles
         - '{{$.inputs.parameters[''host_voice_profile'']}}'
         - '{{$.inputs.parameters[''cohost_voice_profile'']}}'
+        - --model
+        - '{{$.inputs.parameters[''model'']}}'
         - --output
         - '{{$.outputs.artifacts[''podcast''].path}}'
         - --file-type
@@ -148,6 +150,8 @@ deploymentSpec:
         - --hosts
         - '{{$.inputs.parameters[''host_name'']}}'
         - '{{$.inputs.parameters[''cohost_name'']}}'
+        - --model
+        - '{{$.inputs.parameters[''model'']}}'
         - --output
         - '{{$.outputs.artifacts[''podcast_script''].path}}'
         command:
