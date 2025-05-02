@@ -13,7 +13,7 @@ outputs:
 
 metadata:
   annotations:
-    tags: [text-to-speech, audio, podcast, two-speakers]
+    tags: text-to-speech, audio, podcast, two-speakers
     inputs: |   
       host_voice_profile: |
         Must be different from 'cohost_voice_profile' value.
@@ -21,15 +21,18 @@ metadata:
       cohost_voice_profile: | 
         Must be different from 'host_voice_profile' value.
         When using the default value for 'model', may only have recommended values from https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md.
+      model: |
+        The the default model is not used the 'host_voice_profile' and 'cohost_voice_profile' values must be compatible with the selected model.
 
 implementation:
   container:
-    image: dpoulopoulos/kfp-performer:c5b697f
+    image: mzdotai/workflow-components-performer:latest
     command: [python]
     args: [
       performer.py,
       --input,  {inputPath: podcast_script},
       --voice-profiles,  {inputValue: host_voice_profile}, {inputValue: cohost_voice_profile},
+      --model, {inputValue: model},
       --output, {outputPath: podcast},
       --file-type, {inputValue: audio_format},
     ]

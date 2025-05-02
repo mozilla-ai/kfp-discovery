@@ -9,11 +9,11 @@ outputs:
 
 metadata:
   annotations:
-    tags: [downloader, document, persist, http, https]
+    tags: downloader, document, persist, http, https
 
 implementation:
   container:
-    image: dpoulopoulos/kfp-downloader:c5b697f
+    image: mzdotai/workflow-components-downloader:latest
     command: [python]
     args: [
       downloader.py,

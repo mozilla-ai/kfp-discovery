@@ -1,7 +1,7 @@
-ARG BASE_IMAGE=dpoulopoulos/doc-to-podcast-base
+ARG BASE_IMAGE=mzdotai/workflow-components-base
 ARG BASE_TAG=latest
 FROM ${BASE_IMAGE}:${BASE_TAG}
 
 WORKDIR /app
 
-COPY performer.py . 
+COPY performer.py .
