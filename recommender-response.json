@@ -1,0 +1,245 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "component": {
+        "name": "downloader",
+        "url": "https://raw.githubusercontent.com/mozilla-ai/kfp-discovery/refs/heads/main/_components/downloader.yaml",
+        "description": "Download a document from the given URL.",
+        "inputs": [
+          {
+            "name": "url",
+            "type": "String",
+            "description": "The URL of the document to download."
+          }
+        ],
+        "outputs": [
+          {
+            "name": "html_file",
+            "type": "HTML",
+            "description": "The path to save the downloaded document."
+          }
+        ],
+        "implementation": {
+          "container": {
+            "image": "dpoulopoulos/kfp-downloader:c5b697f",
+            "command": [
+              "python"
+            ],
+            "args": [
+              "downloader.py",
+              "--url",
+              {
+                "inputValue": "url"
+              },
+              "--output",
+              {
+                "outputPath": "html_file"
+              },
+              "--overwrite"
+            ]
+          }
+        }
+      },
+      "id": "downloader"
+    },
+    {
+      "component": {
+        "name": "performer",
+        "url": "https://raw.githubusercontent.com/mozilla-ai/kfp-discovery/refs/heads/main/_components/performer.yaml",
+        "description": "Convert a text document to speech using the specified voice profiles.",
+        "inputs": [
+          {
+            "name": "podcast_script",
+            "type": "Markdown",
+            "description": "The path to the input document."
+          },
+          {
+            "name": "host_voice_profile",
+            "type": "String",
+            "description": "The voice profile for the host."
+          },
+          {
+            "name": "cohost_voice_profile",
+            "type": "String",
+            "description": "The voice profile for the co-host."
+          },
+          {
+            "name": "file_type",
+            "type": "String",
+            "description": "The file format for the output audio."
+          }
+        ],
+        "outputs": [
+          {
+            "name": "podcast",
+            "type": "Artifact",
+            "description": "The path to save the converted speech."
+          }
+        ],
+        "implementation": {
+          "container": {
+            "image": "dpoulopoulos/kfp-performer:c5b697f",
+            "command": [
+              "python"
+            ],
+            "args": [
+              "performer.py",
+              "--input",
+              {
+                "inputPath": "podcast_script"
+              },
+              "--output",
+              {
+                "outputPath": "podcast"
+              },
+              "--voice-profiles",
+              {
+                "inputValue": "host_voice_profile"
+              },
+              {
+                "inputValue": "cohost_voice_profile"
+              },
+              "--file-type",
+              {
+                "inputValue": "file_type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "performer"
+    },
+    {
+      "component": {
+        "name": "scriptwriter",
+        "description": "Write a podcast script from a given text document. The script will be formatted for two speakers, host and co-host.",
+        "inputs": [
+          {
+            "name": "processed_document",
+            "type": "Markdown",
+            "description": "The path to the input document."
+          },
+          {
+            "name": "host_name",
+            "type": "String",
+            "description": "The name of the host."
+          },
+          {
+            "name": "cohost_name",
+            "type": "String",
+            "description": "The name of the co-host."
+          }
+        ],
+        "outputs": [
+          {
+            "name": "podcast_script",
+            "type": "Markdown",
+            "description": "The path to save the podcast script."
+          }
+        ],
+        "implementation": {
+          "container": {
+            "image": "dpoulopoulos/kfp-scriptwriter:c5b697f",
+            "command": [
+              "python"
+            ],
+            "args": [
+              "scriptwriter.py",
+              "--input",
+              {
+                "inputPath": "processed_document"
+              },
+              "--output",
+              {
+                "outputPath": "podcast_script"
+              },
+              "--hosts",
+              {
+                "inputValue": "host_name"
+              },
+              {
+                "inputValue": "cohost_name"
+              }
+            ]
+          }
+        }
+      },
+      "id": "scriptwriter"
+    },
+    {
+      "component": {
+        "name": "transformer",
+        "description": "Preprocess the raw input document to extract the text. Supported formats - PDF, DOCX, TXT, MD, HTML.",
+        "inputs": [
+          {
+            "name": "html_file",
+            "type": "HTML",
+            "description": "The path to the input document."
+          },
+          {
+            "name": "file_type",
+            "type": "String",
+            "description": "The type of the input document"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "processed_document",
+            "type": "Markdown",
+            "description": "The path to save the preprocessed document."
+          }
+        ],
+        "implementation": {
+          "container": {
+            "image": "dpoulopoulos/kfp-transformer:c5b697f",
+            "command": [
+              "python"
+            ],
+            "args": [
+              "transformer.py",
+              "--input",
+              {
+                "inputPath": "html_file"
+              },
+              "--output",
+              {
+                "outputPath": "processed_document"
+              },
+              "--file-type",
+              {
+                "inputValue": "file_type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "transformer"
+    }
+  ],
+  "edges": [
+    {
+      "output": "downloaded_file_path",
+      "input": "file_path",
+      "suggested": true,
+      "source": "downloader",
+      "target": "transformer"
+    },
+    {
+      "output": "podcast_script",
+      "input": "podcast_script",
+      "suggested": true,
+      "source": "scriptwriter",
+      "target": "performer"
+    },
+    {
+      "output": "processed_document",
+      "input": "processed_document",
+      "suggested": true,
+      "source": "transformer",
+      "target": "scriptwriter"
+    }
+  ]
+}
