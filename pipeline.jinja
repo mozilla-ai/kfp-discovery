@@ -130,16 +130,10 @@ root:
           artifacts:
             {% for input_name, input_spec in tasks.component.inputs.items() %}
             {% if input_spec.type.startswith('system.') %}
-            {{ input_name }}:
+            {{ pipe.connection_data[node.name].artifact_name }}:
               taskOutputArtifact:
-                outputArtifactKey: {{ input_name }}
-                {% set possible_producers = pipe.predecessors(node) | list %}
-                {% for producer in possible_producers %}
-                {% if input_name in producer.outputs %}
-                producerTask: {{ producer.name }}
-                {% set possible_producers = [] %}
-                {% endif %}
-                {% endfor %}
+                outputArtifactKey: {{ pipe.connection_data[node.name].artifact_key }}
+                producerTask: {{ pipe.connection_data[node.name].producer_step }}
             {% endif %}
             {% endfor %}
           {% endif %}
