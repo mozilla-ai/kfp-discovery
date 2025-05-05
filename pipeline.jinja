@@ -1,0 +1,177 @@
+components:
+  {% for node in pipe.nodes %}
+  {% set components = namespace(component = node.component.component_spec) %}
+  comp-{{ node.name }}:
+    executorLabel: exec-{{ node.name }}
+    inputDefinitions:
+      {% if components.component.inputs %}
+        {% set cinputs = namespace(has_artifact_inputs=false, has_parameter_inputs=false) %}
+        {% for input_name, input_spec in components.component.inputs.items() %}
+          {% if input_spec.type.startswith('system.') %}
+            {% set cinputs.has_artifact_inputs = true %}
+          {% else %}
+            {% set cinputs.has_parameter_inputs = true %}
+          {% endif %}
+      {% endfor %}
+      {% if cinputs.has_parameter_inputs %}
+      parameters:
+        {% for input_name, input_spec in components.component.inputs.items() %}
+        {% if not input_spec.type.startswith('system.') %}
+        {{ input_name }}:
+          parameterType: {{ input_spec.type | upper }}
+        {% endif %}
+        {% endfor %}
+      {% endif %}
+      {% if cinputs.has_artifact_inputs %}
+      artifacts:
+        {% for input_name, input_spec in components.component.inputs.items() %}
+        {% if input_spec.type.startswith('system.') %}
+        {{ input_name }}:
+          artifactType:
+            schemaTitle: {{ input_spec.type.split('@')[0] }}
+            schemaVersion: {{ input_spec.type.split('@')[1] }}
+        {% endif %}
+        {% endfor %}
+      {% endif %}
+      {% endif %}
+    outputDefinitions:
+      {% if components.component.outputs %}
+        {% set coutputs = namespace(has_artifact_outputs=false, has_parameter_outputs=false) %}
+        {% for output_name, output_spec in components.component.outputs.items() %}
+          {% if output_spec.type.startswith('system.') %}
+            {% set coutputs.has_artifact_outputs = true %}
+          {% else %}
+            {% set coutputs.has_parameter_outputs = true %}
+          {% endif %}
+        {% endfor %}
+      {% if coutputs.has_parameter_outputs %}
+      parameters:
+        {% for output_name, output_spec in components.component.outputs.items() %}
+        {% if not output_spec.type.startswith('system.') %}
+        {{ output_name }}:
+          parameterType: {{ output_spec.type | upper }}
+        {% endif %}
+        {% endfor %}
+      {% endif %}
+      {% if coutputs.has_artifact_outputs %}
+      artifacts:
+        {% for output_name, output_spec in components.component.outputs.items() %}
+        {% if output_spec.type.startswith('system.') %}
+        {{ output_name }}:
+          artifactType:
+            schemaTitle: {{ output_spec.type.split('@')[0] }}
+            schemaVersion: {{ output_spec.type.split('@')[1] }}
+        {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+deploymentSpec:
+  executors:
+    {% for node in pipe.nodes %}
+    {% set executors = namespace(implementation = node.component.component_spec.implementation) %}
+    exec-{{ node.name }}:
+      container:
+        args:
+        {% for arg in executors.implementation.container.args %}
+        {% if arg is string %}
+        - {{ arg }}
+        {% elif arg.__class__.__name__ == 'InputValuePlaceholder' %}
+        - {{ "'{{$.inputs.parameters[''" ~ arg.input_name ~ "'']}}'" }}
+        {% elif arg.__class__.__name__ == 'InputPathPlaceholder' %}
+        - {{ "'{{$.inputs.artifacts[''" ~ arg.input_name ~ "''].path}}'" }}
+        {% elif arg.__class__.__name__ == 'OutputPathPlaceholder' %}
+        - {{ "'{{$.outputs.artifacts[''" ~ arg.output_name ~ "''].path}}'" }}
+        {% endif %}
+        {% endfor %}
+        command:
+        {% for cmd in executors.implementation.container.command %}
+        - {{ cmd | tojson }}
+        {% endfor %}
+        image: {{ executors.implementation.container.image }}
+    {% endfor %}
+
+root:
+  dag:
+    tasks:
+      {% for node in pipe.nodes %}
+      {% set tasks = namespace(component = node.component.component_spec) %}
+      {{ node.name }}:
+        taskInfo:
+          name: {{ node.name }}
+        cachingOptions: {}
+        componentRef:
+          name: comp-{{ node.name }}
+        dependentTasks:
+          {% for pred in pipe.predecessors(node) %}
+          - {{ pred.name }}
+          {% endfor %}
+        inputs:
+          {% if node.inputs %}
+          {% set tinputs = namespace(has_artifact_inputs=false, has_parameter_inputs=false) %}
+          {% for input_name, input_spec in tasks.component.inputs.items() %}
+          {% if input_spec.type.startswith('system.') %}
+          {% set tinputs.has_artifact_inputs = true %}
+          {% else %}
+          {% set tinputs.has_parameter_inputs = true %}
+          {% endif %}
+          {% endfor %}
+          {% if tinputs.has_parameter_inputs %}
+          parameters:
+            {% for input_name, input_spec in tasks.component.inputs.items() %}
+            {% if not input_spec.type.startswith('system.') %}
+            {{ input_name }}:
+              componentInputParameter: {{ node.name }}-{{ input_name }}
+            {% endif %}
+            {% endfor %}
+          {% endif %}
+          {% if tinputs.has_artifact_inputs %}
+          artifacts:
+            {% for input_name, input_spec in tasks.component.inputs.items() %}
+            {% if input_spec.type.startswith('system.') %}
+            {{ input_name }}:
+              taskOutputArtifact:
+                outputArtifactKey: {{ input_name }}
+                {% set possible_producers = pipe.predecessors(node) | list %}
+                {% for producer in possible_producers %}
+                {% if input_name in producer.outputs %}
+                producerTask: {{ producer.name }}
+                {% set possible_producers = [] %}
+                {% endif %}
+                {% endfor %}
+            {% endif %}
+            {% endfor %}
+          {% endif %}
+          {% endif %}
+      {% endfor %}
+
+  inputDefinitions:
+    parameters:
+      {% set pipeline_params_dict = {} %}
+      {% set pipeline_parameters_list = pipe.nodes | map(attribute='pipeline_parameters') | list %}
+      {% for node_pipeline_params in pipeline_parameters_list %}
+          {% if node_pipeline_params is mapping %}
+              {% for key, value in node_pipeline_params.items() %}
+                  {% set _ = pipeline_params_dict.update({key: value}) %}
+              {% endfor %}
+          {% endif %}
+      {% endfor %}
+      {% for param_name, param_spec in pipeline_params_dict.items() %}
+      {{ param_name }}:
+        {% if param_spec.default %}
+        defaultValue: {{ param_spec.default }}
+        {% endif %}
+        isOptional: {{ param_spec.optional | lower }}
+        {% if param_spec.description %}
+        description: {{ param_spec.description }}
+        {% endif %}
+        parameterType: {{ param_spec.type | upper }}
+      {% endfor %}
+
+pipelineInfo:
+  name: document-to-podcast
+  description: A pipeline that converts a document into a podcast.
+
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.12.1
