@@ -24,7 +24,7 @@
         ],
         "implementation": {
           "container": {
-            "image": "dpoulopoulos/kfp-downloader:c5b697f",
+            "image": "mzdotai/workflow-components-downloader:latest",
             "command": [
               "python"
             ],
@@ -36,7 +36,7 @@
               },
               "--output",
               {
-                "outputPath": "html_file"
+                "outputPath": "downloaded_file_path"
               },
               "--overwrite"
             ]
@@ -67,10 +67,15 @@
             "description": "The voice profile for the co-host."
           },
           {
-            "name": "file_type",
+            "name": "audio_format",
             "type": "String",
             "description": "The file format for the output audio."
-          }
+          },
+            {
+                "name": "model",
+                "type": "String",
+                "description": "The default model to use for text-to-speech."
+            }
         ],
         "outputs": [
           {
@@ -81,7 +86,7 @@
         ],
         "implementation": {
           "container": {
-            "image": "dpoulopoulos/kfp-performer:c5b697f",
+            "image": "mzdotai/workflow-components-performer:latest",
             "command": [
               "python"
             ],
@@ -104,7 +109,11 @@
               },
               "--file-type",
               {
-                "inputValue": "file_type"
+                "inputValue": "audio_format"
+              },
+              "--model",
+              {
+                  "inputValue": "model"
               }
             ]
           }
@@ -115,6 +124,7 @@
     {
       "component": {
         "name": "scriptwriter",
+        "url": "https://raw.githubusercontent.com/mozilla-ai/kfp-discovery/refs/heads/main/_components/scriptwriter.yaml",
         "description": "Write a podcast script from a given text document. The script will be formatted for two speakers, host and co-host.",
         "inputs": [
           {
@@ -131,6 +141,11 @@
             "name": "cohost_name",
             "type": "String",
             "description": "The name of the co-host."
+          },
+          {
+            "name": "model",
+            "type": "String",
+            "description": "The model to use to write the script."
           }
         ],
         "outputs": [
@@ -142,7 +157,7 @@
         ],
         "implementation": {
           "container": {
-            "image": "dpoulopoulos/kfp-scriptwriter:c5b697f",
+             "image": "mzdotai/workflow-components-scriptwriter:latest",
             "command": [
               "python"
             ],
@@ -162,6 +177,10 @@
               },
               {
                 "inputValue": "cohost_name"
+              },
+              "--model",
+              {
+                "inputValue": "model"
               }
             ]
           }
@@ -172,10 +191,11 @@
     {
       "component": {
         "name": "transformer",
+        "url": "https://raw.githubusercontent.com/mozilla-ai/kfp-discovery/refs/heads/main/_components/transformer.yaml",
         "description": "Preprocess the raw input document to extract the text. Supported formats - PDF, DOCX, TXT, MD, HTML.",
         "inputs": [
           {
-            "name": "html_file",
+            "name": "file_path",
             "type": "HTML",
             "description": "The path to the input document."
           },
@@ -194,7 +214,7 @@
         ],
         "implementation": {
           "container": {
-            "image": "dpoulopoulos/kfp-transformer:c5b697f",
+            "image": "mzdotai/workflow-components-transformer:latest",
             "command": [
               "python"
             ],
@@ -202,7 +222,7 @@
               "transformer.py",
               "--input",
               {
-                "inputPath": "html_file"
+                "inputPath": "file_path"
               },
               "--output",
               {
