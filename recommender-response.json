@@ -17,7 +17,7 @@
         ],
         "outputs": [
           {
-            "name": "html_file",
+            "name": "downloaded_file_path",
             "type": "HTML",
             "description": "The path to save the downloaded document."
           }
