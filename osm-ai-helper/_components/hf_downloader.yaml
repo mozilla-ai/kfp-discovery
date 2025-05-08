@@ -1,0 +1,26 @@
+name: hf-downloader
+description: Download an artifact (e.g., model, dataset, etc.) from Hugging Face Hub.
+
+inputs:
+- {name: repo_id, type: String, description: The Hugging Face Hub repository ID (e.g. username/repo_name).}
+- {name: repo_type, type: String, default: model, description: The type of the repository (e.g. model dataset etc.).}
+- {name: filename, type: String, default: model.pt,  description: The name of the file to download.}
+
+outputs:
+- {name: output_dir, type: Artifact, description: The local directory where the model is downloaded.}
+
+metadata:
+  annotations:
+    tags: downloader, model, hugging-face
+
+implementation:
+  container:
+    image: dpoulopoulos/hf-downloader:latest
+    command: [python]
+    args: [
+      hf_downloader.py,
+      --repo-id, {inputValue: repo_id},
+      --repo-type, {inputValue: repo_type},
+      --filename, {inputValue: filename},
+      --output-dir, {outputPath: output_dir}
+    ]
