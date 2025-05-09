@@ -1,0 +1,32 @@
+name: osm-inference
+description: Run inference on provided map tiles.
+
+inputs:
+- {name: model_dir, type: Artifact, description: The local directory where the model is downloaded.}
+- {name: model_name, type: String, default: model.pt, description: The name of the model to be used for inference.}
+- {name: latitude, type: Float, description: The latitude of the center of the map tile.}
+- {name: longitude, type: Float, description: The longitude of the center of the map tile.}
+- {name: batch_size, type: Integer, default: 32, description: The batch size for inference.}
+- {name: mapbox_token, type: String, description: The Mapbox token for accessing map tiles.}
+
+outputs:
+- {name: output_dir, type: Artifact, description: The local directory where the model is downloaded.}
+
+metadata:
+  annotations:
+    tags: maps, satellite, vision, osm, inference, mapbox
+
+implementation:
+  container:
+    image: dpoulopoulos/osm-inference:latest
+    command: [python]
+    args: [
+      run_inference.py,
+      --model-dir, {inputPath: model_dir},
+      --model-name, {inputValue: model_name},
+      --latitude, {inputValue: latitude},
+      --longitude, {inputValue: longitude},
+      --batch-size, {inputValue: batch_size},
+      --mapbox-token, {inputValue: mapbox_token},
+      --output-dir, {outputPath: output_dir}
+    ]
