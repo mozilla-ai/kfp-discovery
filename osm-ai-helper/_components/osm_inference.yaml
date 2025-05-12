@@ -18,7 +18,7 @@ metadata:
 
 implementation:
   container:
-    image: dpoulopoulos/osm-inference:latest
+    image: mzdotai/workflow-components-osm-inference:latest
     command: [python]
     args: [
       run_inference.py,

@@ -15,7 +15,7 @@ metadata:
 
 implementation:
   container:
-    image: dpoulopoulos/hf-downloader:latest
+    image: mzdotai/workflow-components-hf-downloader:latest
     command: [python]
     args: [
       hf_downloader.py,
