@@ -10,7 +10,7 @@ inputs:
 - {name: mapbox_token, type: String, description: The Mapbox token for accessing map tiles.}
 
 outputs:
-- {name: output_dir, type: Artifact, description: The local directory where the model is downloaded.}
+- {name: output_dir, type: Artifact, description: The local directory where the results (.osm) of inference are stored.}
 
 metadata:
   annotations:
