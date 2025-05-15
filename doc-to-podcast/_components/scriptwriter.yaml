@@ -13,6 +13,8 @@ outputs:
 
 metadata:
   annotations:
+    resources/cpu: "4"
+    resources/memory: "12Gi"
     tags: document, script, podcast
 
 implementation:
