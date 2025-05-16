@@ -13,6 +13,8 @@ outputs:
 
 metadata:
   annotations:
+    resources/cpu: "4"
+    resources/memory: "12Gi"
     tags: text-to-speech, audio, podcast, two-speakers
     inputs: |   
       host_voice_profile: |
