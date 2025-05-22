@@ -1,14 +1,27 @@
-FROM python:3.12.9-slim-bookworm
+ARG CUDA_IMAGE="12.9.0-devel-ubuntu22.04"
+FROM nvidia/cuda:${CUDA_IMAGE}
 
-RUN apt update && \
-    apt install -y --no-install-recommends \
-        git \
-        cmake \
-        build-essential && \
-    apt clean && \
-    rm -rf /var/lib/apt/lists/*
+# We need to set the host to 0.0.0.0 to allow outside access
+ENV HOST=0.0.0.0
 
-RUN python -m pip install --upgrade pip setuptools wheel
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get install -y git build-essential \
+    python3 python3-pip gcc wget \
+    ocl-icd-opencl-dev opencl-headers clinfo \
+    libclblast-dev libopenblas-dev \
+    && mkdir -p /etc/OpenCL/vendors && echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
+
+COPY . .
+
+# setting build related env vars
+ENV CUDA_DOCKER_ARCH=all
+ENV GGML_CUDA=1
+
+# Install depencencies
+RUN python3 -m pip install --upgrade pip cmake scikit-build setuptools fastapi uvicorn sse-starlette pydantic-settings starlette-context
+
+# Install llama-cpp-python separately (build with CUDA)
+RUN CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python
 
 COPY requirements.txt .
 
