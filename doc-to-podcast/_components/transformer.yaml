@@ -11,6 +11,8 @@ outputs:
 
 metadata:
   annotations:
+    resources/cpu: "4"
+    resources/memory: "12Gi"
     tags: text, sanitization, document, preprocess, html, pdf, docx, txt, md
 
 implementation:
