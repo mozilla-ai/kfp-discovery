@@ -3,7 +3,7 @@ description: Run inference on provided map tiles.
 
 inputs:
 - {name: model_dir, type: Artifact, description: The local directory where the model is downloaded.}
-- {name: model_name, type: String, default: model.pt, description: The name of the model to be used for inference.}
+- {name: model_name, type: String, default: model.pt, description: The name of the YOLO model to be used for inference.}
 - {name: latitude, type: Float, description: The latitude of the center of the map tile.}
 - {name: longitude, type: Float, description: The longitude of the center of the map tile.}
 - {name: batch_size, type: Integer, default: 32, description: The batch size for inference.}
@@ -14,6 +14,10 @@ outputs:
 
 metadata:
   annotations:
+    resources/cpu: "8"
+    resources/memory: "32Gi"
+    resources/accelerator: 1
+    resources/accelerator-type: "nvidia.com/gpu"
     tags: maps, satellite, vision, osm, inference, mapbox
 
 implementation:
