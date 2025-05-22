@@ -15,7 +15,7 @@ metadata:
   annotations:
     resources/cpu: "8"
     resources/memory: "32Gi"
-    resources/accelerator: 1
+    resources/accelerator: "1"
     resources/accelerator-type: "nvidia.com/gpu"
     tags: document, script, podcast
 
