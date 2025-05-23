@@ -11,6 +11,8 @@ RUN apt-get update && apt-get upgrade -y \
     libclblast-dev libopenblas-dev \
     && mkdir -p /etc/OpenCL/vendors && echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
 
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
 COPY . .
 
 # setting build related env vars
